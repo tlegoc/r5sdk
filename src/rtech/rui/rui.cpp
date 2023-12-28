@@ -10,12 +10,18 @@
 
 #include "rui.h"
 #include "tier1/cvar.h"
+#include "windows/id3dx.h"
+
+extern __int64* g_var;
 
 //-----------------------------------------------------------------------------
 // Purpose: draw RUI frame
 //-----------------------------------------------------------------------------
 bool __fastcall Rui_Draw(__int64* a1, __m128* a2, const __m128i* a3, __int64 a4, __m128* a5)
 {
+	//g_var = a1;
+	// A1 is probably time
+
 	if (!rui_drawEnable->GetBool())
 		return false;
 

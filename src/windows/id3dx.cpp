@@ -38,6 +38,10 @@ extern BOOL                     g_bImGuiInitialized = FALSE;
 extern UINT                     g_nWindowRect[2] = { NULL, NULL };
 
 ///////////////////////////////////////////////////////////////////////////////////
+extern BOOL						g_bUpscalingInitialized = FALSE;
+
+
+///////////////////////////////////////////////////////////////////////////////////
 static IPostMessageA            s_oPostMessageA = NULL;
 static IPostMessageW            s_oPostMessageW = NULL;
 
@@ -103,6 +107,8 @@ void ImGui_Shutdown()
 	ImGui::DestroyContext();
 }
 
+void DrawUpscalingUi();
+
 void DrawImGui()
 {
 	ImGui_ImplDX11_NewFrame();
@@ -122,11 +128,50 @@ void DrawImGui()
 
 	g_pConsole->RunTask();
 	g_pConsole->RunFrame();
+	DrawUpscalingUi();
 
 	ImGui::EndFrame();
 	ImGui::Render();
 
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+}
+
+
+
+//#################################################################################
+// FSR/DLSS
+//#################################################################################
+void Upscaling_Init()
+{
+	Msg(eDLL_T::ENGINE, "Upscaling_Init()\n");
+	//ID3D11DeviceContext* context = D3D11DeviceContext();
+
+	// Do whatever
+	std::cout << "Swapchain pointer: " << (g_ppSwapChain) << std::endl;
+
+}
+
+void Upscaling_Shutdown()
+{
+	Msg(eDLL_T::ENGINE, "Upscaling_Shutdown()\n");
+	if (!g_bUpscalingInitialized) {
+		Msg(eDLL_T::SYSTEM_ERROR, "Upscaling was not correctly initialized. No shutdown needed.\n");
+		return;
+	}
+}
+
+__int64* g_var;
+
+void DrawUpscalingUi()
+{
+	//ImGui::Image();
+	ImGui::Begin("Upscaling parameters");
+	if (g_var != nullptr)
+		ImGui::Text("%u", *g_var);
+	else
+		ImGui::Text("nullptr!!!");
+
+	ImGui::End();
 }
 
 //#################################################################################
@@ -373,10 +418,19 @@ void DirectX_Init()
 		// Failed to hook into the process, terminate
 		Error(eDLL_T::COMMON, 0xBAD0C0DE, "Failed to detour process: error code = %08x\n", hr);
 	}
+
+	// Should be initialized after because need for swapchain
+	if (!g_bUpscalingInitialized)
+	{
+		Upscaling_Init();
+		g_bUpscalingInitialized = true;
+	}
 }
 
 void DirectX_Shutdown()
 {
+	Upscaling_Shutdown();
+
 	// Begin the detour transaction
 	DetourTransactionBegin();
 	DetourUpdateThread(GetCurrentThread());
