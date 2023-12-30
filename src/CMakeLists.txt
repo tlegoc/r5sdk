@@ -63,6 +63,7 @@ add_subdirectory( engine )
 add_subdirectory( vguimatsurface )
 add_subdirectory( vgui )
 add_subdirectory( loader )
+add_subdirectory( upscaling )
 
 set( FOLDER_CONTEXT "Plugins" )
 add_subdirectory( pluginsdk )

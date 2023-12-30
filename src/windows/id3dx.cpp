@@ -15,6 +15,7 @@
 #include "materialsystem/cmaterialsystem.h"
 #include "public/bitmap/stb_image.h"
 #include "public/rendersystem/schema/texture.g.h"
+#include "upscaling/upscaling.h"
 
 /**********************************************************************************
 -----------------------------------------------------------------------------------
@@ -107,8 +108,6 @@ void ImGui_Shutdown()
 	ImGui::DestroyContext();
 }
 
-void DrawUpscalingUi();
-
 void DrawImGui()
 {
 	ImGui_ImplDX11_NewFrame();
@@ -128,50 +127,13 @@ void DrawImGui()
 
 	g_pConsole->RunTask();
 	g_pConsole->RunFrame();
-	DrawUpscalingUi();
+
+	Upscaling_DebugUI();
 
 	ImGui::EndFrame();
 	ImGui::Render();
 
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-}
-
-
-
-//#################################################################################
-// FSR/DLSS
-//#################################################################################
-void Upscaling_Init()
-{
-	Msg(eDLL_T::ENGINE, "Upscaling_Init()\n");
-	//ID3D11DeviceContext* context = D3D11DeviceContext();
-
-	// Do whatever
-	std::cout << "Swapchain pointer: " << (g_ppSwapChain) << std::endl;
-
-}
-
-void Upscaling_Shutdown()
-{
-	Msg(eDLL_T::ENGINE, "Upscaling_Shutdown()\n");
-	if (!g_bUpscalingInitialized) {
-		Msg(eDLL_T::SYSTEM_ERROR, "Upscaling was not correctly initialized. No shutdown needed.\n");
-		return;
-	}
-}
-
-__int64* g_var;
-
-void DrawUpscalingUi()
-{
-	//ImGui::Image();
-	ImGui::Begin("Upscaling parameters");
-	if (g_var != nullptr)
-		ImGui::Text("%u", *g_var);
-	else
-		ImGui::Text("nullptr!!!");
-
-	ImGui::End();
 }
 
 //#################################################################################
@@ -199,6 +161,9 @@ HRESULT __stdcall Present(IDXGISwapChain* pSwapChain, UINT nSyncInterval, UINT n
 
 HRESULT __stdcall ResizeBuffers(IDXGISwapChain* pSwapChain, UINT nBufferCount, UINT nWidth, UINT nHeight, DXGI_FORMAT dxFormat, UINT nSwapChainFlags)
 {
+	// Since this is executed on window/swapchain resize, we should also update the upscale texture
+	Upscaling_Resize(nWidth, nHeight);
+
 	g_nWindowRect[0] = nWidth;
 	g_nWindowRect[1] = nHeight;
 
@@ -419,17 +384,19 @@ void DirectX_Init()
 		Error(eDLL_T::COMMON, 0xBAD0C0DE, "Failed to detour process: error code = %08x\n", hr);
 	}
 
-	// Should be initialized after because need for swapchain
-	if (!g_bUpscalingInitialized)
+	if (!g_bIsUpscalingInitialized)
 	{
 		Upscaling_Init();
-		g_bUpscalingInitialized = true;
 	}
 }
 
 void DirectX_Shutdown()
 {
-	Upscaling_Shutdown();
+
+	if (g_bIsUpscalingInitialized)
+	{
+		Upscaling_Shutdown();
+	}
 
 	// Begin the detour transaction
 	DetourTransactionBegin();

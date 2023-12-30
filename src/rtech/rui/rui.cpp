@@ -11,16 +11,19 @@
 #include "rui.h"
 #include "tier1/cvar.h"
 #include "windows/id3dx.h"
-
-extern __int64* g_var;
+#include "upscaling/upscaling.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: draw RUI frame
 //-----------------------------------------------------------------------------
 bool __fastcall Rui_Draw(__int64* a1, __m128* a2, const __m128i* a3, __int64 a4, __m128* a5)
 {
-	//g_var = a1;
 	// A1 is probably time
+	// A2 is probably a vec4 cause the last 64 bits are width-height. no idea what the first two floats are
+
+	// Must be run before any UI is drawn
+	if (g_bIsUpscalingInitialized)
+		Upscaling_Run();
 
 	if (!rui_drawEnable->GetBool())
 		return false;
