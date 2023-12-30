@@ -15,6 +15,7 @@ void Upscaling_Init();
 void Upscaling_Shutdown();
 
 void Upscaling_Run();
+void Upscaling_ResetFrameLock();
 void Upscaling_Resize(UINT newWidth, UINT newHeight);
 
 void Upscaling_DebugUI();
